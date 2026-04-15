@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Job Search Service API
-  description: REST API для сервиса поиска работы (7 таблиц БД)
+  description: REST API для сервиса поиска работы (8 таблиц БД)
   version: 1.0.0
 servers:
   - url: http://localhost:3000/api/v1
@@ -18,6 +18,8 @@ tags:
     description: Работодатели
   - name: resumes
     description: Резюме
+  - name: work_experience
+    description: Опыт работы
   - name: vacancies
     description: Вакансии
   - name: categories
@@ -260,7 +262,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Resume'
+                $ref: '#/components/schemas/ResumeDetail'
         '404':
           description: Не найдено
     put:
@@ -297,6 +299,141 @@ paths:
       responses:
         '204':
           description: Удалено
+
+  # ─── WORK EXPERIENCE (Таблица 8: опыт) ─────────────────
+  /resumes/{id}/experience:
+    get:
+      tags: [work_experience]
+      summary: Список опыта работы для резюме
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Список опыта работы
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WorkExperience'
+        '404':
+          description: Резюме не найдено
+    post:
+      tags: [work_experience]
+      summary: Добавить опыт работы в резюме
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWorkExperienceRequest'
+            example:
+              company_name: "ООО ТехКомпания"
+              position: "Backend Developer"
+              start_date: "2022-01-15"
+              end_date: "2024-12-31"
+              responsibilities: "Разработка API на Node.js"
+              is_current: false
+      responses:
+        '201':
+          description: Опыт работы добавлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkExperience'
+        '400':
+          description: Ошибка валидации
+        '404':
+          description: Резюме не найдено
+
+  /resumes/{resume_id}/experience/{exp_id}:
+    get:
+      tags: [work_experience]
+      summary: Детали опыта работы
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: resume_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: exp_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Данные опыта работы
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkExperience'
+        '404':
+          description: Не найдено
+    put:
+      tags: [work_experience]
+      summary: Обновить опыт работы
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: resume_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: exp_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateWorkExperienceRequest'
+      responses:
+        '200':
+          description: Обновлён
+        '404':
+          description: Не найдено
+    delete:
+      tags: [work_experience]
+      summary: Удалить опыт работы
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: resume_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: exp_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Удалён
+        '404':
+          description: Не найдено
 
   # ─── VACANCIES (Таблица 6: вакансии) ───────────────────
   /vacancies:
@@ -765,6 +902,16 @@ components:
           type: string
           format: date-time
 
+    ResumeDetail:
+      allOf:
+        - $ref: '#/components/schemas/Resume'
+        - type: object
+          properties:
+            work_experience:
+              type: array
+              items:
+                $ref: '#/components/schemas/WorkExperience'
+
     ResumeListResponse:
       type: object
       properties:
@@ -778,6 +925,72 @@ components:
           type: integer
         limit:
           type: integer
+
+    # ── Work Experience (Таблица 8: опыт) ────────────────
+    CreateWorkExperienceRequest:
+      type: object
+      required: [company_name, position, start_date]
+      properties:
+        company_name:
+          type: string
+        position:
+          type: string
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+          nullable: true
+        responsibilities:
+          type: string
+        is_current:
+          type: boolean
+          default: false
+
+    UpdateWorkExperienceRequest:
+      type: object
+      properties:
+        company_name:
+          type: string
+        position:
+          type: string
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+        responsibilities:
+          type: string
+        is_current:
+          type: boolean
+
+    WorkExperience:
+      type: object
+      properties:
+        id:
+          type: integer
+        resume_id:
+          type: integer
+        company_name:
+          type: string
+        position:
+          type: string
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+          nullable: true
+        responsibilities:
+          type: string
+        is_current:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
 
     # ── Vacancy (Таблица 6: вакансии) ────────────────────
     CreateVacancyRequest:

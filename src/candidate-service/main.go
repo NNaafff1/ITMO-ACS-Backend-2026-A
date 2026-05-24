@@ -41,3 +41,4 @@ func getResumesBulk(w http.ResponseWriter, req *http.Request) {
     json.NewEncoder(w).Encode(res)
 }
 func getEnv(key, fallback string) string { if v, ok := os.LookupEnv(key); ok { return v }; return fallback }
+-- Solution by Said Nawaf
